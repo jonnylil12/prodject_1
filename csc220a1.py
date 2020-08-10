@@ -40,6 +40,4 @@ def test ():
         done = elapsed > 3600.0
         i = i + 1
 
-
-
 test ()
