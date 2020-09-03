@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/../prodject_tree/.idea/deeznutz.iml" filepath="$PROJECT_DIR$/../prodject_tree/.idea/deeznutz.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/prodject_1.iml" filepath="$PROJECT_DIR$/.idea/prodject_1.iml" />
     </modules>
   </component>
