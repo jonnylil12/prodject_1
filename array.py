@@ -56,3 +56,4 @@ print(numPlayers(4,[20,40,60,60]))
 #         delta.append(min(temp))
 #     return delta
 # print(calculateWindowMinimums(7, [0,4,2,73,11,5,60], 4))
+print()
