@@ -35,7 +35,6 @@ def grouper(express):
 
 
 
-
 def calculator(box):
     solution = first = location = None
     while box:
