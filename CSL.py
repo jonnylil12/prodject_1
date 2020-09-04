@@ -1,23 +1,7 @@
 import sqlite3
 import re
 
-class Database:
-
-    def __init__(self):
-        self.file = sqlite3.connect('database.db')          #database object class establise a connection
-        self.cursor  = self.file.cursor()
-
-    def query(self,query):                               #runs querys and return data if applicable
-        self.cursor.execute(query)
-        self.file.commit()
-        return self.cursor.fetchall()
-
-    def close(self):
-        self.file.close()
-
-DB = Database()         #create connection of main database
-
-
+Borrower = None
 
 
 
@@ -56,17 +40,24 @@ class Error(Exception):
 
 
 
+def Database(query):
+    file = sqlite3.connect('database.db')
+    cursor = file.cursor()                          #create connection of main database
+    cursor.execute(query)
+    file.commit()
+    result = cursor.fetchall()
+    file.close()
+    return result
 
 
-
-def CHECK_OUT_PAGE(Borrower):
-    print(f'\nWelcome back {Borrower[1]}!')
-    print('Command C = checkout  , Command R = return\n')
+def CHECK_OUT_PAGE():
+    print("Enter 'C'  to checkout book , \
+         \nEnter 'R' to return book\n")
     DONE = False
     while not DONE:
         book = input('Enter the books bar code: ')
         command = input('Enter a command: ')
-        ALL_BOOK_BAR_CODES_ = [x[0] for x in DB.query('select Bar_Code from Books')]  #query database for all book bar codes
+        ALL_BOOK_BAR_CODES_ = [x[0] for x in Database('select Bar_Code from Books')]  #query database for all book bar codes
         try:
             assert book in ALL_BOOK_BAR_CODES_, Error(113)
         except:
@@ -80,7 +71,7 @@ def CHECK_OUT_PAGE(Borrower):
 def generate_bar_code():
     BAR_CODE_LENGTH = 7          #for easier admin debugging manually set the length of user bar codes
 
-    ALL_USER_BAR_CODES = DB.query("select ID from Borrowers")
+    ALL_USER_BAR_CODES = Database("select ID from Borrowers")
 
     assert len(ALL_USER_BAR_CODES) != int('9' + '0' * ( BAR_CODE_LENGTH - 1)) , Error(200)    # this checks if all possible code combinations have been saved
 
@@ -93,16 +84,12 @@ def generate_bar_code():
 
 
 
-
-
-
-
 def CREATE_ACCOUNT_PAGE():
     print("\nTo create a free library account please enter your name , home address ,age  and valid email. \
           \nMinors under the age of 16 are inelible for adult cards \
           \nA unique Bar code will then be generated for you\n ")
 
-    taken_emails = DB.query("select Email from Borrowers")
+    taken_emails = Database("select Email from Borrowers")
     name = input('Enter your full first and last name: ')
     email = input('Enter your email address: ')
     age = input('Enter your age: ')
@@ -123,30 +110,25 @@ def CREATE_ACCOUNT_PAGE():
 
     except Exception as e:                                          #back button for main menu or try again
         print(f'\n{e}')
-
         if input('Enter 0 to go to main menu: ') != '0':
              return CREATE_ACCOUNT_PAGE()
         return True
 
     else:
         USER_BAR_CODE = generate_bar_code()             #generate a bar code for borrower
-        DB.query(f"insert into Borrowers values({USER_BAR_CODE},'{name}', \
-                                            '{email}',{age},'{address}',0.00)")       #add borrower to database
+        Database(f"insert into Borrowers values({USER_BAR_CODE},'{name}','{email}',{age},'{address}',0.00)")       #add borrower to database
         print(f'\nYour account was successfully created and your bar code is \n{USER_BAR_CODE}\n')
-        return True
 
 
 
 
 
-
-
-
-def LOGIN__ACCOUNT_PAGE():
+def LOGIN_ACCOUNT_PAGE():
+    global Borrower
                                                                        #login page to access account
-    BAR_CODE = input('\nEnter your Bar Code found on your ID: ')
+    BAR_CODE = input('\nEnter your Bar Code found on your ID: ').strip()
 
-    Borrower = DB.query(f"select * from Borrowers where ID in ({BAR_CODE})")[0]                                                #check for account at specific code entered
+    Borrower = Database(f"select * from Borrowers where ID == {BAR_CODE}")[0]             #check for account at specific code entered
 
     try:
         assert Borrower , Error(112)            #error code for account not found
@@ -155,11 +137,11 @@ def LOGIN__ACCOUNT_PAGE():
         print(f'\n{e}')
 
         if input('Enter 0 to go to main menu: ') != '0':            #back button for main menu or try again
-            return LOGIN__ACCOUNT_PAGE()
+            return LOGIN_ACCOUNT_PAGE()
         return True
 
     else:
-        return CHECK_OUT_PAGE(Borrower)
+        print(f'\nLogin succesfull welcome back {Borrower[1]}\n')
 
 
 
@@ -175,12 +157,10 @@ def SEARCH_PAGE():
 
     command, selection = choice[:2], choice[2:].strip()             #split the entry into the command and selection for verification
 
-    x = {'A=': 'Author', 'T=': 'Title', 'S=': 'Subject'}
-
+    SQl = {'A=': 'Author', 'T=': 'Title', 'S=': 'Subject'}        #SQL command - to - column convertor
     try:
-        assert command in 'A=T=S=', Error(101)      #verify command
-        Books = DB.query(f"select * from Books where {x[command]} == '{selection}' ")  #find books are those parameters
-        assert Books , Error(113)   #checks if books where found
+        assert command in 'A= T= S=', Error(101)             #verify command
+        assert (Books:= Database(f"select * from Books where {SQl[command]} == '{selection}' ")) , Error(113)     #checks if books where found
 
     except Exception as e:
         print(f'\n{e}')
@@ -193,7 +173,6 @@ def SEARCH_PAGE():
             print(f'Title: {book[0]} , Author: {book[1]} , \
                 \nSubject: {book[2]} , Bar Code: {book[3]}\n')    # if books where found return them
 
-        return True
 
 
 
@@ -203,8 +182,7 @@ def SEARCH_PAGE():
 
 def MAIN_PAGE():
 
-    while (CSL_ACTIVE:=True):           #CSL program is running
-
+    while True:           #main LCS program running
         choice = input("Welcome to the CSL library system ! \
                            \nHere you can check in and out books or Search for books \
                            \nEnter 1 to create a new account  \
@@ -218,16 +196,16 @@ def MAIN_PAGE():
 
             if choice == '1':
 
-                CSL_ACTIVE = CREATE_ACCOUNT_PAGE()  # next pages depeding on choice
+                CREATE_ACCOUNT_PAGE()               # next pages depeding on choice
 
             elif choice == '2':
-                CSL_ACTIVE = LOGIN__ACCOUNT_PAGE()
+                LOGIN_ACCOUNT_PAGE()
+                CHECK_OUT_PAGE()
 
             elif choice == '3':
-                CSL_ACTIVE = SEARCH_PAGE()
+                SEARCH_PAGE()
 
             else:
-                DB.close()
                 break
 
         except Exception as e:
