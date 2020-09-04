@@ -68,7 +68,9 @@ def CHECK_OUT_PAGE(Borrower):
         command = input('Enter a command: ')
         ALL_BOOK_BAR_CODES_ = [x[0] for x in DB.query('select Bar_Code from Books')]  #query database for all book bar codes
         try:
-            assert book in  ALL_BOOK_BAR_CODES_, Error(113)
+            assert book in ALL_BOOK_BAR_CODES_, Error(113)
+        except:
+            pass
 
 
 
@@ -76,16 +78,16 @@ def CHECK_OUT_PAGE(Borrower):
 
 
 def generate_bar_code():
-    BAR_CODE_LENGTH = 1          #for easier admin debugging manually set the length of user bar codes
+    BAR_CODE_LENGTH = 7          #for easier admin debugging manually set the length of user bar codes
 
     ALL_USER_BAR_CODES = DB.query("select ID from Borrowers")
 
-    assert len(ALL_USER_BAR_CODES) != 10 ** BAR_CODE_LENGTH, Error(200)  # this checks if all possible code combinations have been saved
+    assert len(ALL_USER_BAR_CODES) != int('9' + '0' * ( BAR_CODE_LENGTH - 1)) , Error(200)    # this checks if all possible code combinations have been saved
 
     if ALL_USER_BAR_CODES  :                    #checks if there is no user bar codes in the database
         return ALL_USER_BAR_CODES[-1][0] + 1
 
-    return 40 * BAR_CODE_LENGTH ** 2 - 110 * BAR_CODE_LENGTH + 70  # formula to find smallet bar code of specific length
+    return   int('1' + '0' *( BAR_CODE_LENGTH - 1))                            # formula to find smallet bar code of specific length
 
 
 
@@ -175,10 +177,10 @@ def SEARCH_PAGE():
 
     x = {'A=': 'Author', 'T=': 'Title', 'S=': 'Subject'}
 
-    Books = DB.query(f"select * from Books where {x[command]} == '{selection}' ")   #find books are those parameters
-
     try:
         assert command in 'A=T=S=', Error(101)      #verify command
+        Books = DB.query(f"select * from Books where {x[command]} == '{selection}' ")  #find books are those parameters
+        assert Books , Error(113)   #checks if books where found
 
     except Exception as e:
         print(f'\n{e}')
@@ -187,13 +189,9 @@ def SEARCH_PAGE():
         return True
 
     else:
-
-        if Books:                 # if books where found return them
-            for book in Books:
-                print(f'Title: {book[0]} , Author: {book[1]} , \
-                      \nSubject: {book[2]} , Bar Code: {book[3]}\n')
-        else:
-            print('No books found')
+        for book in Books:
+            print(f'Title: {book[0]} , Author: {book[1]} , \
+                \nSubject: {book[2]} , Bar Code: {book[3]}\n')    # if books where found return them
 
         return True
 
