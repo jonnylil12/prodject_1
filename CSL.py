@@ -39,6 +39,7 @@ class Error(Exception):
              110:' Minors are ineligable for adult library card' ,
              111:' Please enter a valid home address  ' ,
              112:' Account not found' ,
+             113:' Book not found' ,
 
 
              200:' Database Bar Code generator has reached max capacity  \
@@ -59,11 +60,15 @@ class Error(Exception):
 
 
 def CHECK_OUT_PAGE(Borrower):
-    print(f'\nWelcome back {Borrower[1]}!\n')
-    # choice = input('Enter 1 to search for books or if your ready to check in/out'
-    #                'Enter )
-    pass
-
+    print(f'\nWelcome back {Borrower[1]}!')
+    print('Command C = checkout  , Command R = return\n')
+    DONE = False
+    while not DONE:
+        book = input('Enter the books bar code: ')
+        command = input('Enter a command: ')
+        ALL_BOOK_BAR_CODES_ = [x[0] for x in DB.query('select Bar_Code from Books')]  #query database for all book bar codes
+        try:
+            assert book in  ALL_BOOK_BAR_CODES_, Error(113)
 
 
 
@@ -77,8 +82,9 @@ def generate_bar_code():
 
     assert len(ALL_USER_BAR_CODES) != 10 ** BAR_CODE_LENGTH, Error(200)  # this checks if all possible code combinations have been saved
 
-    if ALL_USER_BAR_CODES  :
+    if ALL_USER_BAR_CODES  :                    #checks if there is no user bar codes in the database
         return ALL_USER_BAR_CODES[-1][0] + 1
+
     return 40 * BAR_CODE_LENGTH ** 2 - 110 * BAR_CODE_LENGTH + 70  # formula to find smallet bar code of specific length
 
 
