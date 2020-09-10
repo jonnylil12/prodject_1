@@ -19,7 +19,6 @@ def DATABASE(query):
 
 
 
-
 def PAGE_ERROR_HANDLER(PAGE):       #decorator that wraps functions with a error catcher
    def OVERRIDED_FUNC(*data):       #accepts parameters if overriden function has them
         try:
@@ -76,11 +75,9 @@ def EXPIRED_HOLDS():  #remove expired holds
             HOLD_DATE = date.today() + timedelta(weeks=1)
             DATABASE(f"update Queue set Holddate = '{HOLD_DATE}' where Barcode == {record[0]} and Queue_ID = 1")
 
-            # todo alert user that there hold has expired by email
+            # todo alert user that there hold has expired by ema
 
-
-
-def OVERDUE_BOOKS():  #issue fines
+def OVERDUE_BOOKS():  # issue fines
     for record in DATABASE("select * from Queue where Duedate"):
         today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
         if today > duedate:     #book is overdue
@@ -98,7 +95,7 @@ def OVERDUE_BOOKS():  #issue fines
 @PAGE_ERROR_HANDLER
 def PLACE_HOLD(BOOK,BORROWER,QUEUE):
     assert len(QUEUE) , ERROR(111)  # book isnt checked out
-    assert  BORROWER[0] != QUEUE[0][1] and not QUEUE[0][2] , ERROR(112) # borrower cant place hold on book he has
+    assert  BORROWER[0] == QUEUE[0][1] , ERROR(112) # borrower cant place hold on book he has
     HOLDERS = [x[0] for x in DATABASE(f"select User_ID from Queue where Barcode == {BOOK[3]}")]
     assert BORROWER[0] not in HOLDERS, ERROR(113)   # borrower already has hold on book
     DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},NULL,0,{len(QUEUE) + 1},NUll)")
@@ -148,8 +145,7 @@ def CHECK_OUT_BOOK(BOOK,BORROWER,QUEUE):
 
     else:  # book hasnt been checked out
         DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},'{DUE_DATE}',0,1,NULL)")
-        showinfo("Checkout",
-                 f"\nCheckout successfull book {BOOK[3]} is due by {DUE_DATE}.\nYou have 2 renew(s) left for this book\n")
+        showinfo("Checkout",f"\nCheckout successfull book {BOOK[3]} is due by {DUE_DATE}.\nYou have 2 renew(s) left for this book\n")
 
     DATABASE(f"update Books set Status == 0 where Barcode == {BOOK[3]}")  # update status of book for admin purposes
 
@@ -205,7 +201,7 @@ def ACCOUNT_CREATION(name,email):
 @PAGE_ERROR_HANDLER
 def LOGIN_RESULTS(barcode):
     BORROWER = DATABASE(f"select * from Borrowers where User_ID == '{barcode}'")  # check for account at specific code entered
-    assert BORROWER, ERROR(104)
+    assert BORROWER, ERROR(104) #if perso
     showinfo("Login results", f"Login successfull welcome back {BORROWER[0][1]}")
     STACK.push(TRANSACTIONS_PAGE(BORROWER))  # if login succesfull load the transactions page
 
@@ -218,7 +214,7 @@ def SEARCH_RESULTS(text):
         assert '=' in text,ERROR(100)
         text = text.split('=')
         text[0] = text[0].strip().upper()
-        assert text[0] in 'ATS' ,ERROR(100)
+        assert text[0] in 'ATS' ,ERROR(100)  #make sure its right command
 
         #reformat search for more accurate results
         text[1] = text[1].strip().split()
@@ -242,6 +238,7 @@ def SEARCH_RESULTS(text):
                                       \nBarcode: {record[3]}   \
                                     \nStatus: {x[record[4]]}\n' \
                                      for record in BOOKS]))
+
 
 
 
@@ -477,6 +474,7 @@ TK.title("CSL Library")
 assert len(DATABASE("select User_ID from Borrowers")) !=  int('9' + '0' * (BAR_CODE_LENGTH - 1)) , ERROR(200)
 # raise fatal error if library has no books in database
 assert DATABASE("select * from Books") , ERROR(201)
+
 EXPIRED_HOLDS()  # independent auto service
 OVERDUE_BOOKS()  # independent auto service
 
