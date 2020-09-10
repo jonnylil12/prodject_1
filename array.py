@@ -27,8 +27,7 @@
 #
 #
 # x = compact_array('str','d',0)
-# print(x)
-
+#this was changedf in master
 
 from random import randrange
 def numPlayers(cutOffRank,scores):

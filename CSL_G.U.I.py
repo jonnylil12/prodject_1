@@ -6,6 +6,7 @@ from datetime import date , timedelta ,datetime
 
 BAR_CODE_LENGTH = 7  # fset the length of user bar codes
 
+print('Hello')
 
 #BACKEND----------------------------------------BACKEND-------------------------------------BACKEND
 
