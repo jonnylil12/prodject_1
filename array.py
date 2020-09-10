@@ -27,7 +27,7 @@
 #
 #
 # x = compact_array('str','d',0)
-# print(x)
+print(x)
 
 
 from random import randrange
