@@ -27,7 +27,6 @@ def PAGE_ERROR_HANDLER(PAGE):       #decorator that wraps functions with a error
 
 
 
-print(0)
 
 def ERROR(code):
 

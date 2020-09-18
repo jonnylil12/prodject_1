@@ -6,8 +6,6 @@ from datetime import date , timedelta ,datetime
 
 BAR_CODE_LENGTH = 7  # fset the length of user bar codes
 
-print('Hello')
-
 #BACKEND----------------------------------------BACKEND-------------------------------------BACKEND
 
 def DATABASE(query):
@@ -76,9 +74,22 @@ def EXPIRED_HOLDS():  #remove expired holds
             HOLD_DATE = date.today() + timedelta(weeks=1)
             DATABASE(f"update Queue set Holddate = '{HOLD_DATE}' where Barcode == {record[0]} and Queue_ID = 1")
 
-            # todo alert user that there hold has expired by ema
+            # todo alert user that there hold has expired by emadef OVERDUE_BOOKS():  # issue fines
+    for record in DATABASE("select * from Queue where Duedate"):
+        today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
+        if today > duedate:     #book is overdue
+            choice = input(f"Borrower {record[1]} has overdue book \
+                           \nEnter 'F= barcode' to issue fine\n: ").split()
+            #apply fine
+            DATABASE(f"update Borrowers set Balance = Balance + 0.10 where User_ID == {record[1]}")
 
-def OVERDUE_BOOKS():  # issue fines
+        elif today == duedate - timedelta(days=3):  # if 3 days before book is due send email
+            pass
+            #todo email persom
+
+
+
+def OVERDUE_BOOKS():
     for record in DATABASE("select * from Queue where Duedate"):
         today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
         if today > duedate:     #book is overdue
