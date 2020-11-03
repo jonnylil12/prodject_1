@@ -12,3 +12,5 @@ print("Login success")
 server.sendemail(sender, rec, message)
 print("Email has been sent to ", rec)
  print('new')
+
+#test
