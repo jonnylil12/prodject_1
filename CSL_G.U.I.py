@@ -63,51 +63,51 @@ def GENERATE_BAR_CODE():
 
 
 
+#
+# def EXPIRED_HOLDS():  #remove expired holds
+#     for record in DATABASE("select * from Queue where Holddate"):
+#         if  date.today() == datetime.strptime(record[5],"%Y-%m-%d").date() :  #check if hold has expired
+#             #remove hold from queue and update queue
+#             DATABASE(f"delete from Queue where Barcode == {record[0]} and User_ID == {record[1]}")
+#             DATABASE(f"update Queue set Queue_ID = Queue_ID - 1 where Barcode == {record[0]}")
+#             #gret and set hold date for next in queue
+#             HOLD_DATE = date.today() + timedelta(weeks=1)
+#             DATABASE(f"update Queue set Holddate = '{HOLD_DATE}' where Barcode == {record[0]} and Queue_ID = 1")
+#
+#             # todo alert user that there hold has expired by emadef OVERDUE_BOOKS():  # issue fines
+#     for record in DATABASE("select * from Queue where Duedate"):
+#         today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
+#         if today > duedate:     #book is overdue
+#             choice = input(f"Borrower {record[1]} has overdue book \
+#                            \nEnter 'F= barcode' to issue fine\n: ").split()
+#             #apply fine
+#             DATABASE(f"update Borrowers set Balance = Balance + 0.10 where User_ID == {record[1]}")
+#
+#         elif today == duedate - timedelta(days=3):  # if 3 days before book is due send email
+#             pass
+#             #todo email persom
 
-def EXPIRED_HOLDS():  #remove expired holds
-    for record in DATABASE("select * from Queue where Holddate"):
-        if  date.today() == datetime.strptime(record[5],"%Y-%m-%d").date() :  #check if hold has expired
-            #remove hold from queue and update queue
-            DATABASE(f"delete from Queue where Barcode == {record[0]} and User_ID == {record[1]}")
-            DATABASE(f"update Queue set Queue_ID = Queue_ID - 1 where Barcode == {record[0]}")
-            #gret and set hold date for next in queue
-            HOLD_DATE = date.today() + timedelta(weeks=1)
-            DATABASE(f"update Queue set Holddate = '{HOLD_DATE}' where Barcode == {record[0]} and Queue_ID = 1")
-
-            # todo alert user that there hold has expired by emadef OVERDUE_BOOKS():  # issue fines
-    for record in DATABASE("select * from Queue where Duedate"):
-        today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
-        if today > duedate:     #book is overdue
-            choice = input(f"Borrower {record[1]} has overdue book \
-                           \nEnter 'F= barcode' to issue fine\n: ").split()
-            #apply fine
-            DATABASE(f"update Borrowers set Balance = Balance + 0.10 where User_ID == {record[1]}")
-
-        elif today == duedate - timedelta(days=3):  # if 3 days before book is due send email
-            pass
-            #todo email persom
 
 
-
-def OVERDUE_BOOKS():
-    for record in DATABASE("select * from Queue where Duedate"):
-        today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
-        if today > duedate:     #book is overdue
-            choice = input(f"Borrower {record[1]} has overdue book \
-                           \nEnter 'F= barcode' to issue fine\n: ").split()
-            #apply fine
-            DATABASE(f"update Borrowers set Balance = Balance + 0.10 where User_ID == {record[1]}")
-
-        elif today == duedate - timedelta(days=3):  # if 3 days before book is due send email
-            pass
-            #todo email persom
+# def OVERDUE_BOOKS():
+#     for record in DATABASE("select * from Queue where Duedate"):
+#         today , duedate = date.today() , datetime.strptime(record[2], "%Y-%m-%d").date()
+#         if today > duedate:     #book is overdue
+#             choice = input(f"Borrower {record[1]} has overdue book \
+#                            \nEnter 'F= barcode' to issue fine\n: ").split()
+#             #apply fine
+#             DATABASE(f"update Borrowers set Balance = Balance + 0.10 where User_ID == {record[1]}")
+#
+#         elif today == duedate - timedelta(days=3):  # if 3 days before book is due send email
+#             pass
+#             #todo email persom
 
 
 
 @PAGE_ERROR_HANDLER
 def PLACE_HOLD(BOOK,BORROWER,QUEUE):
     assert len(QUEUE) , ERROR(111)  # book isnt checked out
-    assert  BORROWER[0] == QUEUE[0][1] , ERROR(112) # borrower cant place hold on book he has
+    assert  BORROWER[0] != QUEUE[0][1] , ERROR(112) # borrower cant place hold on book he has
     HOLDERS = [x[0] for x in DATABASE(f"select User_ID from Queue where Barcode == {BOOK[3]}")]
     assert BORROWER[0] not in HOLDERS, ERROR(113)   # borrower already has hold on book
     DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},NULL,0,{len(QUEUE) + 1},NUll)")
@@ -487,8 +487,8 @@ assert len(DATABASE("select User_ID from Borrowers")) !=  int('9' + '0' * (BAR_C
 # raise fatal error if library has no books in database
 assert DATABASE("select * from Books") , ERROR(201)
 
-EXPIRED_HOLDS()  # independent auto service
-OVERDUE_BOOKS()  # independent auto service
+# EXPIRED_HOLDS()  # independent auto service
+# OVERDUE_BOOKS()  # independent auto service
 
 STACK = Stack(MAIN_PAGE())  # create the history stack to keep track of the current page
 
