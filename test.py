@@ -3,11 +3,10 @@ from typing import Iterable
 def find(data_structure:Iterable, *search, contains_some:bool  = False  ) -> bool:
 
   """
-
      Used to quickly see if data structure contains all or at least one value(s)
      if you want to see how many values where found then also return len(search) - result
 
-    ------------------------------------
+    ------------------------------------------------------------------------
     Algorithm:
 
           1. search values are packed into tuple and converted to a set
@@ -16,19 +15,13 @@ def find(data_structure:Iterable, *search, contains_some:bool  = False  ) -> boo
           4. if all values must be found then (result == 0 ) is returned
              if at least one value must be found then (result <= len(search)) is returned
 
-    ------------------------------------
+    ------------------------------------ ------------------------------------
 
-     Speed:
-          time:  O(1) , space: O(1)
+     Complexity:
+          time:  O(1)
+          space: O(1)
 
     ----------------------------------
-
-    Example:
-          see if string contains any vowels
-
-          find("david","a",'e','i','o','u',contains_some=True)
-
-    ------------------------------------
 
    :param data_structure:
         a iterable data structure
@@ -54,14 +47,18 @@ def find(data_structure:Iterable, *search, contains_some:bool  = False  ) -> boo
 
   return (result < len(search)) if contains_some else (result == 0)
 
+i = None
+
+print(type(i))
 
 
-print(find("123",'1','2','3','4',contains_some=True))
 
 
 
-class d:
 
-  def __init__(self,hello):
-        pass
+
+
+
+
+
 

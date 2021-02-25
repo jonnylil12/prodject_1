@@ -9,6 +9,7 @@
 import sys
 
 def __no():
+
     print('no')
 
 

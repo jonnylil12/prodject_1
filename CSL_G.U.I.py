@@ -4,7 +4,7 @@ import sqlite3
 import re
 from datetime import date , timedelta ,datetime
 
-BAR_CODE_LENGTH = 7  # fset the length of user bar codes
+BAR_CODE_LENGTH = 6  # fset the length of user bar codes
 
 #BACKEND----------------------------------------BACKEND-------------------------------------BACKEND
 
@@ -15,6 +15,7 @@ def DATABASE(query):
         file.commit()
         result = cursor.fetchall()
     return result
+
 
 
 
@@ -57,7 +58,7 @@ def GENERATE_BAR_CODE():
     ALL_USER_BAR_CODES = DATABASE("select User_ID from Borrowers")
     if ALL_USER_BAR_CODES  :                    #checks if there is no user bar codes in the database
         return ALL_USER_BAR_CODES[-1][0] + 1
-    return   int('1' + '0' *( BAR_CODE_LENGTH - 1))    # formula to find smallet bar code of specific length
+    return   int('1' + '0' * ( BAR_CODE_LENGTH - 1))    # formula to find smallet bar code of specific length
 
 
 
@@ -107,10 +108,10 @@ def GENERATE_BAR_CODE():
 @PAGE_ERROR_HANDLER
 def PLACE_HOLD(BOOK,BORROWER,QUEUE):
     assert len(QUEUE) , ERROR(111)  # book isnt checked out
-    assert  BORROWER[0] != QUEUE[0][1] , ERROR(112) # borrower cant place hold on book he has
+    assert  BORROWER[0] != QUEUE[0][1] , ERROR(112) # borrower cant place hold on book they has
     HOLDERS = [x[0] for x in DATABASE(f"select User_ID from Queue where Barcode == {BOOK[3]}")]
     assert BORROWER[0] not in HOLDERS, ERROR(113)   # borrower already has hold on book
-    DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},NULL,0,{len(QUEUE) + 1},NUll)")
+    DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},NULL,NULL,{len(QUEUE) + 1},0)")
     showinfo("Place hold",f"\nHold has succesfully been placed \nand will expire one week after book has been returned")
 
 
@@ -118,13 +119,15 @@ def PLACE_HOLD(BOOK,BORROWER,QUEUE):
 
 @PAGE_ERROR_HANDLER
 def RETURN_BOOK(BOOK,BORROWER,QUEUE):
+
     assert QUEUE, ERROR(110)
-    assert QUEUE[0][1] == BORROWER[0] and QUEUE[0][2]  , ERROR(110) # borrower didnt check out book
+    assert QUEUE[0][1] == BORROWER[0] and QUEUE[0][3] , ERROR(110) # borrower didnt check out book
     DATABASE(f"delete from Queue where Barcode == {BOOK[3]} and User_ID == {BORROWER[0]}")  # remove borrower from queue
-    DATABASE(f"update Queue set Queue_ID = Queue_ID - 1 where Barcode == {BOOK[3]}")  # update the queue
+    DATABASE(f"update Queue set Place_In_Line = Place_In_Line - 1 where Barcode == {BOOK[3]}")  # update the queue
     # give holdate to next person in line for one week if there is a queue
     HOLD_DATE = date.today() + timedelta(weeks=1)
-    DATABASE(f"update Queue set Holddate  = '{HOLD_DATE}' where Barcode == {BOOK[3]} and Queue_ID = 1")
+    DATABASE(f"update Queue set Holddate  = '{HOLD_DATE}' where Barcode == {BOOK[3]} and Place_In_Line = 1")
+
     DATABASE(f"update Books set Status == 1 where Barcode == {BOOK[3]}")  # update status of book for admin purpose
     showinfo("Return book", f"\nBook succefully returned thank you for your buisness")
 
@@ -141,22 +144,24 @@ def CHECK_OUT_BOOK(BOOK,BORROWER,QUEUE):
 
         assert QUEUE[0][1] == BORROWER[0],   ERROR(107)  # book is unavaliable to borrower
 
-        if QUEUE[0][5]:  # current borrower has hold on book
+        if QUEUE[0][2]:  # current borrower has hold on book
             DATABASE(f"update Queue set Duedate = '{DUE_DATE}' ,Holddate = NULL where Barcode == {BOOK[3]} and User_ID == {BORROWER[0]}")
             showinfo("Checkout",f"\nCheckout successfull book {BOOK[3]} is due by {DUE_DATE}.\nYou have 2 renew(s) left for this book")
 
         else:  # is being renewed
+
             assert len(QUEUE) == 1,  ERROR(108) # cannot renew book with holds
-            assert QUEUE[0][3] <  2 , ERROR(109) # cannot renew book more than twice
+            assert QUEUE[0][5] <  2 , ERROR(109) # cannot renew book more than twice
             OLD_DATE = DATABASE(f"select Duedate from Queue where Barcode == {BOOK[3]} and User_ID == {BORROWER[0]} ")  # get old date from borrower
             NEW_DATE = (datetime.strptime(OLD_DATE[0][0], "%Y-%m-%d") + timedelta( weeks=3)).date()  # get new date for borrower 3 weeks from old date
             # update borrowewr with new date and increase borrowers renew value
             DATABASE(f"update Queue set Duedate = '{NEW_DATE}' , Renewed = Renewed + 1  where Barcode == {BOOK[3]} and User_ID == {BORROWER[0]} ")
             showinfo("Checkout", f"\nCheckout successfull book {BOOK[3]} has been renewed and is due by {NEW_DATE}. \
-                                           \nYou have {2 - (QUEUE[0][3] + 1)} renew(s) left for this book\n")
+                                           \nYou have {2 - (QUEUE[0][5] + 1)} renew(s) left for this book\n")
 
     else:  # book hasnt been checked out
-        DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},'{DUE_DATE}',0,1,NULL)")
+
+        DATABASE(f"insert into Queue values({BOOK[3]},{BORROWER[0]},NULL,'{DUE_DATE}',1,0)")
         showinfo("Checkout",f"\nCheckout successfull book {BOOK[3]} is due by {DUE_DATE}.\nYou have 2 renew(s) left for this book\n")
 
     DATABASE(f"update Books set Status == 0 where Barcode == {BOOK[3]}")  # update status of book for admin purposes
@@ -182,6 +187,7 @@ def TRANS_RESULTS(BORROWER,text):
         assert BOOK, ERROR(105)  # check if books exits
 
         QUEUE = DATABASE(f"select * from Queue where Barcode == {BOOK[0][3]} ")  # returns entire queue of the book
+
         if text[0] == 'C':
             CHECK_OUT_BOOK(BOOK[0], BORROWER[0], QUEUE)
 
@@ -199,10 +205,16 @@ def TRANS_RESULTS(BORROWER,text):
 def ACCOUNT_CREATION(name,email):
 
         assert all(x.isalpha() or x.isspace() for x in name), ERROR(101)  #invalid name
+
         assert re.search("(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", email),ERROR(102)  #regex email validate
+
+
+
         assert email not in (record[0] for record in DATABASE("select Email from Borrowers") + [[None]]),ERROR(103) # if email is taken raise error
 
+
         USER_BAR_CODE = GENERATE_BAR_CODE()  # generate a bar code for borrower
+
         DATABASE(f"insert into Borrowers values({USER_BAR_CODE},'{name}','{email}',0.00)")  # add borrower to database
         showinfo("Account creation", f'\nYour account was successfully created and your ID number is \n{USER_BAR_CODE}')
 
@@ -212,7 +224,10 @@ def ACCOUNT_CREATION(name,email):
 
 @PAGE_ERROR_HANDLER
 def LOGIN_RESULTS(barcode):
+
     BORROWER = DATABASE(f"select * from Borrowers where User_ID == '{barcode}'")  # check for account at specific code entered
+
+
     assert BORROWER, ERROR(104) #if perso
     showinfo("Login results", f"Login successfull welcome back {BORROWER[0][1]}")
     STACK.push(TRANSACTIONS_PAGE(BORROWER))  # if login succesfull load the transactions page
